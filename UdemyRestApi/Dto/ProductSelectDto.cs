@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿
+using WebApi.Database.Models;
 
-namespace WebApi.Models
+namespace WebApi.Database.Dto
 {
-    public class Product
+    public class ProductSelectDto
     {
         public int ProductId { get; set; }
 

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30804.86
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UdemyRestApi", "UdemyRestApi\UdemyRestApi.csproj", "{2464020A-4AB7-4B6B-923C-BB773E376929}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApi.Database", "UdemyRestApi\WebApi.Database.csproj", "{2464020A-4AB7-4B6B-923C-BB773E376929}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApi", "WebApi\WebApi.csproj", "{99834FC5-C1E0-4C85-BB3B-814773AA3114}"
 EndProject

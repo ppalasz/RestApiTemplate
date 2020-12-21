@@ -1,11 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using WebApi.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using WebApi.Database.Dto;
+using WebApi.Database.Services;
 
 namespace WebApi.Controllers
 {
@@ -14,68 +13,102 @@ namespace WebApi.Controllers
     public class ProductsController : ControllerBase
     {
         private readonly ILogger<ProductsController> _logger;
-        private static readonly List<Product> _products = new List<Product>()
-        {
-            new Product
-            {
-                ProductId = 1,
-                ProductName = "magnetofon",
-                ProductPrice = 33.4
-            },
-            new Product
-            {
-                ProductId = 2,
-                ProductName = "kaseta",
-                ProductPrice = 4.4
-            }
-        };
-        
-        public ProductsController(ILogger<ProductsController> logger)
+        private readonly IProductService _productService;
+
+        public ProductsController(ILogger<ProductsController> logger, IProductService productService)
         {
             _logger = logger;
+            _productService = productService;
+        }
+
+        [HttpGet("Hello")]
+        public IActionResult Hello()
+        {
+            return Ok("Hello");
         }
 
         [HttpGet]
-        public IEnumerable<Product> Get()
+        [Route("Product")]
+        //Products/Product/6
+        public IActionResult GetProduct(int id)
         {
-            return _products;
-        }
-
-        [HttpGet]
-        public Product Get(int id)
-        {
-            var product = _products
-                .SingleOrDefault(x => x.ProductId == id);
+            var product = _productService.Get(id);
 
             if (product == null)
-                throw new ArgumentException($"Product id = {id} not found");
+                return StatusCode(StatusCodes.Status404NotFound);
 
-            return product;
+            return StatusCode(StatusCodes.Status302Found, product);
+        }
+
+        [HttpGet]
+        public IActionResult GetProducts(
+            string search, 
+            string sortBy = null,
+            string sortOrder = null)
+        {
+            var products = _productService.GetAll(search, sortBy, sortOrder);
+            return Ok(products);
         }
 
         [HttpPost]
-        public void Post([FromBody]Product product)
+        public IActionResult PostProduct([FromBody] ProductInsertDto productInsert)
         {
-            var existingProduct = _products
-                .SingleOrDefault(x => x.ProductId == product.ProductId);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
 
-            if (existingProduct != null)
-                throw new ArgumentException($"Product id = {product.ProductId} already exists");
+            var newId = _productService.Add(productInsert);
 
-            _products.Add(product);
+            return StatusCode(StatusCodes.Status201Created, newId);
         }
 
         [HttpPut]
-        public void Put(int id, [FromBody] Product product)
+        public IActionResult PutProduct(int id, [FromBody] ProductUpdateDto product)
         {
-            var productToUpdate = _products
-                .SingleOrDefault(x => x.ProductId == id);
-            
-            if(productToUpdate==null)
-                throw new ArgumentException($"Product id = {id} not found");
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
 
-            productToUpdate = product;
+            try
+            {
+                _productService.Update(id, product);
+            }
+            catch (KeyNotFoundException e)
+            {
+                return NotFound(e);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,e);
+            }
 
+            return StatusCode(StatusCodes.Status202Accepted,"Product updated");
+        }
+
+        [HttpDelete]
+        public IActionResult DeleteProduct(int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                _productService.Delete(id);
+            }
+            catch (KeyNotFoundException e)
+            {
+                return NotFound(e);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, e);
+            }
+
+            return StatusCode(StatusCodes.Status200OK, "Product deleted");
         }
     }
 }
