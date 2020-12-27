@@ -92,7 +92,7 @@ namespace WebApi.Database.Services
             return productAdded.Entity.ProductId;
         }
 
-        public async void UpdateAsync(int id, ProductUpdateDto product)
+        public async Task UpdateAsync(int id, ProductUpdateDto product)
         {
             var productFound = await _productContext
                 .Products
@@ -109,7 +109,7 @@ namespace WebApi.Database.Services
             await _productContext.SaveChangesAsync ();
         }
 
-        public async void DeleteAsync(int id)
+        public async Tas DeleteAsync(int id)
         {
             var productFound = await _productContext
                 .Products
