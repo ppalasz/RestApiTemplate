@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -53,16 +54,26 @@ namespace WebApi.Startup
             var mapper = mapperConfig.CreateMapper();
             services.AddSingleton(mapper);
 
+            services.AddApiVersioning();
+
+            //services //version must be in header
+            //    .AddApiVersioning(o => o.ApiVersionReader = new MediaTypeApiVersionReader());
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ProductsDbContext productsDbContext)
+        public void Configure(
+            IApplicationBuilder app, 
+            IWebHostEnvironment env, 
+            ProductsDbContext productsDbContext)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "WebApi v1"));
+                app.UseSwaggerUI(c => c
+                    .SwaggerEndpoint("/swagger/v1/swagger.json", "WebApi v1")
+                );
             }
 
             app.UseHttpsRedirection();

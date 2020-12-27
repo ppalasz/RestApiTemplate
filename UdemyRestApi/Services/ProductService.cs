@@ -2,12 +2,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using AutoMapper.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Internal;
 using WebApi.Database.Data;
 using WebApi.Database.Dto;
 using WebApi.Database.Models;
+using WebApi.Database.Helpers;
 
 namespace WebApi.Database.Services
 {
@@ -22,44 +25,79 @@ namespace WebApi.Database.Services
             _mapper = mapper;
         }
 
-        public IQueryable<ProductSelectDto> GetAll(string search)
+        public async Task<IQueryable<ProductSelectDto>> GetAllAsync(
+            string search,
+            string sortBy, 
+            string sortOrder, 
+            int pageNr=1, 
+            int pageSize=50)
         {
             var products = _productContext
                 .Products
                 .Where(x =>
-                    x.ProductName.Contains(search) 
-                    || String.IsNullOrWhiteSpace(search))
-                .Select(x => _mapper.Map<ProductSelectDto>(x));
+                    x.ProductName.Contains(search)
+                    || string.IsNullOrWhiteSpace(search));
 
-            return products;
+            if (!string.IsNullOrWhiteSpace(sortBy))
+            {
+                if (sortOrder == "desc")
+                {
+                    products = products
+                        .OrderByDescending(sortBy);
+                }
+                else
+                {
+                    products = products
+                        .OrderBy(sortBy);
+                }
+            }
+
+            if (pageNr > 1)
+            {
+                products = products
+                    .Skip(pageSize * (pageNr-1))
+                    .Take(pageSize);
+            }    
+            
+            if(pageSize > 0)
+            {
+                products = products
+                    .Take(pageSize);
+            }
+
+            var results = (await products.ToListAsync()).AsQueryable();
+
+            return results.Select(x => _mapper.Map<ProductSelectDto>(x));
         }
 
-        public ProductDetailsDto Get(int id)
+        public async Task<ProductDetailsDto> GetAsync(int id)
         {
-            var product = _productContext
+            var product = await _productContext
                 .Products
-                .SingleOrDefault(x => x.ProductId == id);
+                .SingleOrDefaultAsync(x => x.ProductId == id);
 
             return _mapper.Map<ProductDetailsDto>(product);
         }
 
-        public int Add(ProductInsertDto product)
+        public async Task<int> AddAsync(ProductInsertDto product)
         {
             var newProduct = _mapper.Map<Product>(product);
 
-            var productAdded = _productContext.Products.Add(newProduct);
+            var productAdded = await _productContext
+                .Products
+                .AddAsync(newProduct);
 
-            _productContext.SaveChanges();
+            await _productContext.SaveChangesAsync();
 
             return productAdded.Entity.ProductId;
         }
 
-        public void Update(int id, ProductUpdateDto product)
+        public async void UpdateAsync(int id, ProductUpdateDto product)
         {
-            var productFound = _productContext
+            var productFound = await _productContext
                 .Products
                 .AsNoTracking()
-                .SingleOrDefault(x => x.ProductId == id);
+                .SingleOrDefaultAsync(x => x.ProductId == id);
 
             if (productFound == null || product.ProductId != id)
                 throw new KeyNotFoundException();
@@ -68,22 +106,22 @@ namespace WebApi.Database.Services
 
             _productContext.Products.Update(productFound);
             
-            _productContext.SaveChanges();
+            await _productContext.SaveChangesAsync ();
         }
 
-        public void Delete(int id)
+        public async void DeleteAsync(int id)
         {
-            var productFound = _productContext
+            var productFound = await _productContext
                 .Products
                 .AsNoTracking()
-                .SingleOrDefault(x => x.ProductId == id);
+                .SingleOrDefaultAsync(x => x.ProductId == id);
 
             if (productFound == null)
                 throw new KeyNotFoundException();
             
             _productContext.Products.Remove(productFound);
 
-            _productContext.SaveChanges();
+            await _productContext.SaveChangesAsync();
         }
     }
 }
