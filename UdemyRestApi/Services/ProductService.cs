@@ -109,7 +109,7 @@ namespace WebApi.Database.Services
             await _productContext.SaveChangesAsync ();
         }
 
-        public async Tas DeleteAsync(int id)
+        public async Task DeleteAsync(int id)
         {
             var productFound = await _productContext
                 .Products
